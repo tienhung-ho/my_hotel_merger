@@ -1,9 +1,9 @@
 from typing import List, Dict
-from hotel_merger.suppliers.base import BaseSupplierInterface
-from hotel_merger.utils import deduplicate_amenities_fuzzy, clean_text, combine_address, standardize_country, standardize_images
+from hotel_merger.suppliers.base import BaseSupplier
+from hotel_merger.utils import deduplicate_amenities, clean_text, combine_address, standardize_country, standardize_images
 from hotel_merger.errors import DataParsingError
 
-class PatagoniaSupplier(BaseSupplierInterface):
+class PatagoniaSupplier(BaseSupplier):
     """
     Supplier class for Patagonia.
     Handles fetching and parsing data from the Patagonia supplier.
@@ -35,7 +35,7 @@ class PatagoniaSupplier(BaseSupplierInterface):
             amenities = data.get("amenities", []) or []
             if not isinstance(amenities, list):
                 amenities = []
-            standardized_amenities = deduplicate_amenities_fuzzy(amenities)
+            standardized_amenities = deduplicate_amenities(amenities)
 
             booking_conditions = data.get("booking_conditions", []) or []
             if not isinstance(booking_conditions, list):

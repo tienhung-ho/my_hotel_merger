@@ -1,12 +1,10 @@
-# hotel_merger/suppliers/base.py
-
 from abc import ABC, abstractmethod
 from typing import List, Dict
 import requests
 import json
 from hotel_merger.errors import SupplierFetchError, DataParsingError
 
-class BaseSupplierInterface(ABC):
+class BaseSupplier(ABC):
     """
     Abstract base class for all suppliers.
     Defines the required methods for fetching and parsing data from a supplier.

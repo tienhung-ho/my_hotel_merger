@@ -1,14 +1,6 @@
-# hotel_merger/utils.py
-
 import json
 import re
 from typing import List, Dict, Union, Optional
-
-from hotel_merger.models import Hotel, AmenityImage
-
-# ========================
-# UTILITY FUNCTIONS
-# ========================
 
 def normalize_amenity(amenity: str) -> str:
     """
@@ -36,7 +28,7 @@ def string_similarity(str1: str, str2: str) -> float:
     matches = sum(1 for a, b in zip(str1, str2) if a == b)
     return matches / max(len(str1), len(str2)) if max(len(str1), len(str2)) > 0 else 0
 
-def deduplicate_amenities_fuzzy(amenities: List[str], cutoff: float=0.8) -> List[str]:
+def deduplicate_amenities(amenities: List[str], cutoff: float=0.8) -> List[str]:
     """
     Deduplicate amenities by grouping similar amenities using fuzzy matching.
     
@@ -56,6 +48,7 @@ def deduplicate_amenities_fuzzy(amenities: List[str], cutoff: float=0.8) -> List
             similarity = string_similarity(amenity_normalized, unique_norm)
             if similarity >= cutoff:
                 match_found = True
+                
                 # Prefer the longer name for more detailed description
                 if len(amenity.strip()) > len(unique[idx]):
                     unique[idx] = amenity.strip()
@@ -116,14 +109,11 @@ def standardize_country(country: Optional[str]) -> str:
         "SINGAPORE": "Singapore",
         "JP": "Japan",
         "JPN": "Japan"
-        # Add more countries as needed
     }
     
-    # Check if the country is in the mapping
     if country in country_mapping:
         return country_mapping[country]
     
-    # If not found, return the original input
     return country.capitalize()
 
 def capitalize_first_letter(text: str) -> str:
@@ -203,10 +193,9 @@ def deduplicate_list(items: List[Union[str, Dict]]) -> List:
     if not items:
         return []
     if isinstance(items[0], dict):
-        # Convert dict to JSON string for deduplication
         unique = {json.dumps(item, sort_keys=True): item for item in items if item}
         return list(unique.values())
-    # Normalize and deduplicate
+    
     normalized_set = set()
     unique_list = []
     for item in items:
@@ -216,82 +205,4 @@ def deduplicate_list(items: List[Union[str, Dict]]) -> List:
             unique_list.append(item)
     return unique_list
 
-def merge_hotel_data(hotels: List[Dict]) -> List[Dict]:
-    """
-    Merge hotel data from multiple suppliers based on `id`.
-    
-    Args:
-        hotels (List[Dict]): List of hotels from suppliers.
-    
-    Returns:
-        List[Dict]: Merged list of hotels.
-    """
-    merged = {}
-    for hotel in hotels:
-        hotel_id = hotel.get("id")
-        if not hotel_id:
-            continue  # Skip if no ID
-        if hotel_id not in merged:
-            merged[hotel_id] = hotel
-        else:
-            existing = merged[hotel_id]
-            # Select main description: prefer the existing one or choose the longer one
-            existing_description = existing.get("description", "")
-            new_description = hotel.get("description", "")
-            if not existing_description and new_description:
-                merged_description = new_description
-            elif existing_description and new_description:
-                merged_description = existing_description if len(existing_description) >= len(new_description) else new_description
-            else:
-                merged_description = existing_description or new_description
 
-            # Merge address and country
-            merged_address = existing["location"].get("address") or hotel["location"].get("address")
-            merged_country = existing["location"].get("country") or hotel["location"].get("country")
-
-            # Merge amenities
-            existing_general = existing.get("amenities", {}).get("general", [])
-            new_general = hotel.get("amenities", {}).get("general", [])
-            merged_general = deduplicate_amenities_fuzzy(existing_general + new_general)
-
-            existing_room = existing.get("amenities", {}).get("room", [])
-            new_room = hotel.get("amenities", {}).get("room", [])
-            merged_room = deduplicate_amenities_fuzzy(existing_room + new_room)
-
-            # Merge images
-            existing_images = existing.get("images", {})
-            new_images = hotel.get("images", {})
-            merged_rooms = deduplicate_list(existing_images.get("rooms", []) + new_images.get("rooms", []))
-            merged_site = deduplicate_list(existing_images.get("site", []) + new_images.get("site", []))
-            merged_amenities_images = deduplicate_list(existing_images.get("amenities", []) + new_images.get("amenities", []))
-
-            # Merge booking conditions
-            existing_booking = existing.get("booking_conditions", [])
-            new_booking = hotel.get("booking_conditions", [])
-            merged_booking = existing_booking + new_booking  # Already standardized and capitalized in parse
-
-            # Update merged data
-            merged[hotel_id] = {
-                "id": hotel_id,
-                "destination_id": existing.get("destination_id") or hotel.get("destination_id"),
-                "name": existing.get("name") or hotel.get("name"),
-                "description": capitalize_first_letter(merged_description),
-                "location": {
-                    "lat": existing["location"].get("lat") or hotel["location"].get("lat"),
-                    "lng": existing["location"].get("lng") or hotel["location"].get("lng"),
-                    "address": merged_address,
-                    "city": existing["location"].get("city") or hotel["location"].get("city"),
-                    "country": merged_country
-                },
-                "amenities": {
-                    "general": merged_general,
-                    "room": merged_room
-                },
-                "images": {
-                    "rooms": merged_rooms,
-                    "site": merged_site,
-                    "amenities": merged_amenities_images
-                },
-                "booking_conditions": deduplicate_amenities_fuzzy(merged_booking)
-            }
-    return list(merged.values())

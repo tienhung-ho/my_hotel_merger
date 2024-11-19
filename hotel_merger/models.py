@@ -1,5 +1,3 @@
-# hotel_merger/models.py
-
 from typing import List, Dict, Optional
 
 class AmenityImage:
@@ -159,3 +157,39 @@ class Hotel:
             "images": self.images.to_dict(),
             "booking_conditions": self.booking_conditions
         }
+        
+    
+    @staticmethod
+    def from_merged_dict(merged_data: Dict) -> 'Hotel':
+        """
+        Create a Hotel instance from merged data dictionary.
+
+        Args:
+            merged_data (Dict): Dictionary containing merged data.
+
+        Returns:
+            Hotel: A new Hotel instance.
+        """
+        return Hotel(
+            id=merged_data["id"],
+            destination_id=merged_data.get("destination_id"),
+            name=merged_data.get("name"),
+            location=Location(
+                lat=merged_data["location"].get("lat"),
+                lng=merged_data["location"].get("lng"),
+                address=merged_data["location"].get("address"),
+                city=merged_data["location"].get("city"),
+                country=merged_data["location"].get("country")
+            ),
+            description=merged_data.get("description", ""),
+            amenities=Amenities(
+                general=merged_data["amenities"].get("general", []),
+                room=merged_data["amenities"].get("room", [])
+            ),
+            images=Images(
+                rooms=[AmenityImage(**img) for img in merged_data["images"].get("rooms", [])],
+                site=[AmenityImage(**img) for img in merged_data["images"].get("site", [])],
+                amenities=[AmenityImage(**img) for img in merged_data["images"].get("amenities", [])]
+            ),
+            booking_conditions=merged_data.get("booking_conditions", [])
+        )

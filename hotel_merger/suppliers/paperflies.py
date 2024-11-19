@@ -1,11 +1,10 @@
 from typing import List, Dict
 
-from hotel_merger.suppliers.base import BaseSupplierInterface
-from hotel_merger.models import Hotel
-from hotel_merger.utils import deduplicate_amenities_fuzzy, clean_text, combine_address, standardize_country, standardize_images
+from hotel_merger.suppliers.base import BaseSupplier
+from hotel_merger.utils import deduplicate_amenities, clean_text, combine_address, standardize_country, standardize_images
 from hotel_merger.errors import DataParsingError
 
-class PaperfliesSupplier(BaseSupplierInterface):
+class PaperfliesSupplier(BaseSupplier):
     """
     Supplier class for Paperflies.
     Handles fetching and parsing data from the Paperflies supplier.
@@ -44,8 +43,8 @@ class PaperfliesSupplier(BaseSupplierInterface):
             if not isinstance(booking_conditions, list):
                 booking_conditions = []
 
-            standardized_general = deduplicate_amenities_fuzzy(amenities_general)
-            standardized_room = deduplicate_amenities_fuzzy(amenities_room)
+            standardized_general = deduplicate_amenities(amenities_general)
+            standardized_room = deduplicate_amenities(amenities_room)
             standardized_booking = [clean_text(cond.strip()) for cond in booking_conditions if cond]
 
             return {
