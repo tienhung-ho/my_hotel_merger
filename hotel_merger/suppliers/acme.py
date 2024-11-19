@@ -1,6 +1,6 @@
 from typing import Dict
 from hotel_merger.suppliers.base import BaseSupplier
-from hotel_merger.utils import deduplicate_amenities, standardize_country
+from hotel_merger.utils import deduplicate_amenities, standardize_country, combine_address
 
 class AcmeSupplier(BaseSupplier):
     """Supplier class for Acme."""
@@ -28,6 +28,7 @@ class AcmeSupplier(BaseSupplier):
             if not isinstance(amenities, list):
                 amenities = []
             standardized_amenities = deduplicate_amenities(amenities)
+            combined_address = combine_address(data.get('Address', '').strip(), data.get('PostalCode', '').strip())
             return {
                 "id": data.get("Id", "").strip(),
                 "destination_id": data.get("DestinationId"),
@@ -36,7 +37,7 @@ class AcmeSupplier(BaseSupplier):
                 "location": {
                     "lat": data.get("Latitude") if isinstance(data.get("Latitude"), (int, float)) else None,
                     "lng": data.get("Longitude") if isinstance(data.get("Longitude"), (int, float)) else None,
-                    "address": f"{data.get('Address', '').strip()}, {data.get('PostalCode', '').strip()}",
+                    "address": combined_address,
                     "city": data.get("City", "").strip(),
                     "country": standardize_country(data.get("Country", "").strip())
                 },

@@ -61,21 +61,23 @@ def deduplicate_amenities(amenities: List[str], cutoff: float=0.8) -> List[str]:
 
 def combine_address(address: Optional[str], postal_code: Optional[str]) -> str:
     """
-    Combine address and postal code.
-    
+    Combine address and postal code without duplicating the postal code.
+
     Args:
         address (Optional[str]): The address.
         postal_code (Optional[str]): The postal code.
-    
+
     Returns:
         str: The combined address.
     """
     address = address.strip() if address else ""
     postal_code = postal_code.strip() if postal_code else ""
-    if postal_code:
-        return f"{address}, {postal_code}"
-    return address
 
+    # Kiểm tra nếu mã bưu điện đã có trong địa chỉ
+    if postal_code and postal_code not in address:
+        return f"{address}, {postal_code}".strip(", ")
+
+    return address
 def standardize_country(country: Optional[str]) -> str:
     """
     Standardize country names manually by matching common names and abbreviations.
